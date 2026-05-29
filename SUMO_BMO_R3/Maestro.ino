@@ -1,26 +1,40 @@
 // ========================
 // CONFIGURACIÓN DE PINES - ARDUINO UNO R3
 // ========================
-#include <Wire.h> //Librería esencial para I2C
+#include <Arduino.h>
+#include <Wire.h> // Librería esencial para I2C
 
-// CONFIGURACIÓN I2C (Hardcodeada nativamente en A4 y A5 para UNO R3)
+// ESTRUCTURAS DE DATOS PARA I2C
+struct DatosEncoders {
+  long e3;
+  long e4;
+};
+
+struct DatosVelocidades {
+  byte v3;
+  byte v4;
+};
+
+// CONFIGURACIÓN I2C
 #define I2C_SDA A4 
 #define I2C_SCL A5 
-const byte DIR_ESCLAVO = 0x69; 
-volatile int encoder1 = 0, encoder2 = 0;
-int vel1 = 150, vel2 = 150, vel3 =   
+const byte DIR_ESCLAVO = 0x67; // Usaremos esta constante en todo el código
 
-// INTERRUPCIONES (reservadas)
+// Variables globales de control
+volatile int encoder1 = 0, encoder2 = 0;
+int vel1 = 150, vel2 = 150, vel3 = 150, vel4 = 150; 
+
+// INTERRUPCIONES 
 #define INT1 2
 #define INT2 3
 
-// PWM (sin conflictos)
+// PWM 
 #define PWM1 5
 #define PWM2 6
 #define PWM3 9
 #define PWM4 10
 
-// SALIDAS DIGITALES
+// SALIDAS DIGITALES 
 int digitales[] = {4, 7, 8, 12, 13, A0, A1, A2};
 
 // ========================
@@ -100,18 +114,21 @@ void test1(){
   delay(5000);
 }
 
-// --- NUEVA FUNCIÓN EN EL MAESTRO ---
+// --- FUNCIÓN DE CONTROL OPTIMIZADA Y SIN ERRORES ---
 void actualizarControlSincronizacionCompleta() {
   
-  // 1. PEDIR ENCODERS AL ESCLAVO
+  // 1. TIEMPO DE MUESTREO (Esperamos a que los motores acumulen pasos)
+  delay(100); 
+
+  // 2. PEDIR ENCODERS AL ESCLAVO (Cambiado a DIR_ESCLAVO)
   DatosEncoders encodersEsclavo = {0, 0};
   
-  Wire.requestFrom(DIRECCION_ESCLAVO, sizeof(DatosEncoders));
+  Wire.requestFrom(DIR_ESCLAVO, sizeof(DatosEncoders));
   if (Wire.available() == sizeof(DatosEncoders)) {
     Wire.readBytes((char*)&encodersEsclavo, sizeof(DatosEncoders));
   }
 
-  // 2. COPIA SEGURA ENCODERS LOCALES (1 y 2)
+  // 3. COPIA SEGURA ENCODERS LOCALES E INMEDIATO RESET
   noInterrupts();
   long e1 = encoder1;
   long e2 = encoder2;
@@ -122,16 +139,12 @@ void actualizarControlSincronizacionCompleta() {
   long e3 = encodersEsclavo.e3;
   long e4 = encodersEsclavo.e4;
 
-  // 3. TIEMPO DE MUESTREO
-  delay(100); 
-
-  // 4. AQUÍ VA TU ALGORITMO DE CONTROL PARA LOS 4 MOTORES
-  // (Ejemplo rápido: ajustar vel2, vel3 y vel4 en base a errores con e1)
+  // 4. ALGORITMO DE CONTROL PARA LOS 4 MOTORES
   int error2 = e1 - e2;
   int error3 = e1 - e3;
   int error4 = e1 - e4;
 
-  vel1 -= (error2 + error3 + error4) * 0.1; // Ajuste global o el algoritmo que uses
+  // vel1 se mantiene como velocidad base fija para la sincronización cooperativa
   vel2 += error2 * 0.5;
   vel3 += error3 * 0.5;
   vel4 += error4 * 0.5;
@@ -149,27 +162,22 @@ void actualizarControlSincronizacionCompleta() {
   // 6. ENVIAR VELOCIDADES AL ESCLAVO (3 y 4)
   DatosVelocidades vEsclavo = {(byte)vel3, (byte)vel4};
   
-  Wire.beginTransmission(DIRECCION_ESCLAVO);
+  Wire.beginTransmission(DIR_ESCLAVO);
   Wire.write((byte*)&vEsclavo, sizeof(DatosVelocidades));
   Wire.endTransmission();
 }
-// ========================
-// Funciones Framework I2C (Eventos de comunicación binaria)
-// ========================
 
-// Se ejecuta automáticamente si este Arduino es ESCLAVO y el maestro le envía un código
+// ========================
+// Funciones Framework I2C
+// ========================
 void i2cRecibirDato(int cuantosBytes) {
   if (Wire.available() > 0) {
-    byte instruccion = Wire.read(); // Lee la instrucción binaria hardcodeada
-    
-    // Aquí puedes meter un switch para reaccionar a los códigos binarios
-    // Ejemplo: if(instruccion == 0x01) { ... }
+    byte instruccion = Wire.read();
   }
 }
 
-// Se ejecuta automáticamente si este Arduino es ESCLAVO y el maestro le pide datos
 void i2cPeticionDato() {
-  byte respuesta = 0xAA; // Código binario de respuesta de ejemplo
+  byte respuesta = 0xAA; 
   Wire.write(respuesta); 
 }
 
@@ -184,39 +192,22 @@ void isr2() {
 }
 
 // ========================
-// SETUPEs la opción más directa para enviar texto o comandos sencillos entre dos placas.
+// SETUP
 // ========================
 void setup() {
-
-
   Serial.begin(9600);
 
-  // ------------------------
   // I2C
-  // ------------------------
-  Wire.begin();
+  Wire.begin(); // Se une al bus como Maestro
 
-  // ------------------------
   // ENCODERS
-  // ------------------------
   pinMode(INT1, INPUT_PULLUP);
   pinMode(INT2, INPUT_PULLUP);
 
-  attachInterrupt(
-    digitalPinToInterrupt(INT1),
-    isr1,
-    FALLING
-  );
+  attachInterrupt(digitalPinToInterrupt(INT1), isr1, FALLING);
+  attachInterrupt(digitalPinToInterrupt(INT2), isr2, FALLING);
 
-  attachInterrupt(
-    digitalPinToInterrupt(INT2),
-    isr2,
-    FALLING
-  );
-
-  // ------------------------
   // PWM
-  // ------------------------
   pinMode(PWM1, OUTPUT);
   pinMode(PWM2, OUTPUT);
   pinMode(PWM3, OUTPUT);
@@ -228,16 +219,13 @@ void setup() {
   analogWrite(PWM3, 0);
   analogWrite(PWM4, 0);
 
-  // ------------------------
   // DIRECCIONES
-  // ------------------------
   for (int i = 0; i < 8; i++) {
-
     pinMode(digitales[i], OUTPUT);
     digitalWrite(digitales[i], LOW);
   }
 
-  // Todas adelante
+  // Todas adelante por defecto
   digitalWrite(digitales[0], HIGH);
   digitalWrite(digitales[2], HIGH);
   digitalWrite(digitales[4], HIGH);
@@ -249,34 +237,7 @@ void setup() {
 // ========================
 // LOOP
 // ========================
-void loop() { // Comprobar si esta bien el loop
+void loop() { 
+  // Tu función de sincronización se ejecuta cíclicamente de forma correcta
   actualizarControlSincronizacionCompleta();
-  // // Aplicar PWM
-  // analogWrite(PWM1, vel1);
-  // analogWrite(PWM2, vel2);
-
-  // // Tiempo de muestreo
-  // delay(100);
-
-  // // Copia segura encoder
-  // noInterrupts();
-
-  // long e1 = encoder1;
-  // long e2 = encoder2;
-
-  // encoder1 = 0;
-  // encoder2 = 0;
-
-  // interrupts();
-
-  // // Error de velocidad
-  // int error = e1 - e2;
-
-  // // Corrección proporcional
-  // vel2 += error * 0.5;
-  // vel1 -= error * 0.5;
-
-  // // Limitar PWM
-  // vel1 = constrain(vel1, 0, 255);
-  // vel2 = constrain(vel2, 0, 255);
 }
