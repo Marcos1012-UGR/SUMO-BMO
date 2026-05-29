@@ -8,7 +8,7 @@
 #define I2C_SCL A5 
 const byte DIR_ESCLAVO = 0x69; 
 volatile int encoder1 = 0, encoder2 = 0;
-int vel1 = 150, vel2 = 150;
+int vel1 = 150, vel2 = 150, vel3 =   
 
 // INTERRUPCIONES (reservadas)
 #define INT1 2
@@ -100,7 +100,59 @@ void test1(){
   delay(5000);
 }
 
+// --- NUEVA FUNCIÓN EN EL MAESTRO ---
+void actualizarControlSincronizacionCompleta() {
+  
+  // 1. PEDIR ENCODERS AL ESCLAVO
+  DatosEncoders encodersEsclavo = {0, 0};
+  
+  Wire.requestFrom(DIRECCION_ESCLAVO, sizeof(DatosEncoders));
+  if (Wire.available() == sizeof(DatosEncoders)) {
+    Wire.readBytes((char*)&encodersEsclavo, sizeof(DatosEncoders));
+  }
 
+  // 2. COPIA SEGURA ENCODERS LOCALES (1 y 2)
+  noInterrupts();
+  long e1 = encoder1;
+  long e2 = encoder2;
+  encoder1 = 0;
+  encoder2 = 0;
+  interrupts();
+
+  long e3 = encodersEsclavo.e3;
+  long e4 = encodersEsclavo.e4;
+
+  // 3. TIEMPO DE MUESTREO
+  delay(100); 
+
+  // 4. AQUÍ VA TU ALGORITMO DE CONTROL PARA LOS 4 MOTORES
+  // (Ejemplo rápido: ajustar vel2, vel3 y vel4 en base a errores con e1)
+  int error2 = e1 - e2;
+  int error3 = e1 - e3;
+  int error4 = e1 - e4;
+
+  vel1 -= (error2 + error3 + error4) * 0.1; // Ajuste global o el algoritmo que uses
+  vel2 += error2 * 0.5;
+  vel3 += error3 * 0.5;
+  vel4 += error4 * 0.5;
+
+  // Limitar todos los PWM
+  vel1 = constrain(vel1, 0, 255);
+  vel2 = constrain(vel2, 0, 255);
+  vel3 = constrain(vel3, 0, 255);
+  vel4 = constrain(vel4, 0, 255);
+
+  // 5. APLICAR PWM LOCALES (1 y 2)
+  analogWrite(PWM1, vel1);
+  analogWrite(PWM2, vel2);
+
+  // 6. ENVIAR VELOCIDADES AL ESCLAVO (3 y 4)
+  DatosVelocidades vEsclavo = {(byte)vel3, (byte)vel4};
+  
+  Wire.beginTransmission(DIRECCION_ESCLAVO);
+  Wire.write((byte*)&vEsclavo, sizeof(DatosVelocidades));
+  Wire.endTransmission();
+}
 // ========================
 // Funciones Framework I2C (Eventos de comunicación binaria)
 // ========================
@@ -198,46 +250,33 @@ void setup() {
 // LOOP
 // ========================
 void loop() { // Comprobar si esta bien el loop
+  actualizarControlSincronizacionCompleta();
+  // // Aplicar PWM
+  // analogWrite(PWM1, vel1);
+  // analogWrite(PWM2, vel2);
 
-  // Aplicar PWM
-  analogWrite(PWM1, vel1);
-  analogWrite(PWM2, vel2);
+  // // Tiempo de muestreo
+  // delay(100);
 
-  // Tiempo de muestreo
-  delay(100);
+  // // Copia segura encoder
+  // noInterrupts();
 
-  // Copia segura encoder
-  noInterrupts();
+  // long e1 = encoder1;
+  // long e2 = encoder2;
 
-  long e1 = encoder1;
-  long e2 = encoder2;
+  // encoder1 = 0;
+  // encoder2 = 0;
 
-  encoder1 = 0;
-  encoder2 = 0;
+  // interrupts();
 
-  interrupts();
+  // // Error de velocidad
+  // int error = e1 - e2;
 
-  // Error de velocidad
-  int error = e1 - e2;
+  // // Corrección proporcional
+  // vel2 += error * 0.5;
+  // vel1 -= error * 0.5;
 
-  // Corrección proporcional
-  vel2 += error * 0.5;
-  vel1 -= error * 0.5;
-
-  // Limitar PWM
-  vel1 = constrain(vel1, 0, 255);
-  vel2 = constrain(vel2, 0, 255);
-
-  // Debug
-  Serial.print("E1: ");
-  Serial.print(e1);
-
-  Serial.print("E2: ");
-  Serial.print(e2);
-
-  Serial.print("PWM1: ");
-  Serial.print(vel1);
-
-  Serial.print("PWM2: ");
-  Serial.println(vel2);
+  // // Limitar PWM
+  // vel1 = constrain(vel1, 0, 255);
+  // vel2 = constrain(vel2, 0, 255);
 }
