@@ -16,7 +16,7 @@ struct DatosVelocidades {
 };
 
 // CONFIGURACIÓN I2C
-const byte DIR_ESCLAVO = 0x69; // Su propia dirección
+const byte DIR_ESCLAVO = 0x67; // Su propia dirección
 
 // Variables de control y encoders (Modificadas en ISR / I2C)
 volatile long encoder3 = 0;
