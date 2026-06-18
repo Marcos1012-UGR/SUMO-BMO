@@ -238,6 +238,6 @@ void setup() {
 // LOOP
 // ========================
 void loop() { 
-  // Tu función de sincronización se ejecuta cíclicamente de forma correcta
+  // Tu función de sincronización se ejecuta de forma correcta
   actualizarControlSincronizacionCompleta();
 }
