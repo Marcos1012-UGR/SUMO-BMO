@@ -2,7 +2,7 @@ volatile long count1 = 0;
 volatile long count2 = 0;
 
 #define EN1 4
-#define EN2 7
+#define EN2 8
 #define PWM1 5
 #define PWM2 6
 
