@@ -87,77 +87,80 @@ void isr2() {
 // ========================
 // Funciones - MAESTRO
 // ========================
-void test1(){
+void test1() {
   analogWrite(PWM1, 255);
   analogWrite(PWM2, 255);
-  analogWrite(PWM3, 255);
-  analogWrite(PWM4, 255);
 
   delay(2000);
-  //1 segundo F1
-  digitalWrite(digitales[0], HIGH);
+
+  // F1
+  digitalWrite(DIR_M1_A, HIGH);
+  digitalWrite(DIR_M1_B, LOW);
   delay(1000);
 
-  //1 segundo R1
-  digitalWrite(digitales[0], LOW);
-  digitalWrite(digitales[1], HIGH);
+  // R1
+  digitalWrite(DIR_M1_A, LOW);
+  digitalWrite(DIR_M1_B, HIGH);
   delay(1000);
 
-  //1 segundo F2
-  digitalWrite(digitales[1], LOW);
-  digitalWrite(digitales[2], HIGH);
+  // F2
+  digitalWrite(DIR_M2_A, HIGH);
+  digitalWrite(DIR_M2_B, LOW);
   delay(1000);
 
-  //1 segundo R2
-  digitalWrite(digitales[2], LOW);
-  digitalWrite(digitales[3], HIGH);
+  // R2
+  digitalWrite(DIR_M2_A, LOW);
+  digitalWrite(DIR_M2_B, HIGH);
   delay(1000);
 
-  //1 segundo F3
-  digitalWrite(digitales[3], LOW);
-  digitalWrite(digitales[4], HIGH);
+  // F3
+  // enviar orden al esclavo
   delay(1000);
 
-  //1 segundo R3
-  digitalWrite(digitales[4], LOW);
-  digitalWrite(digitales[5], HIGH);
+  // R3
+  // enviar orden al esclavo
   delay(1000);
 
-  //1 segundo F4
-  digitalWrite(digitales[5], LOW);
-  digitalWrite(digitales[6], HIGH);
+  // F4
+  // enviar orden al esclavo
   delay(1000);
 
-  //1 segundo R4
-  digitalWrite(digitales[6], LOW);
-  digitalWrite(digitales[7], HIGH);
+  // R4
+  // enviar orden al esclavo
   delay(1000);
 
-  //1 segundo FALL
-  digitalWrite(digitales[7], LOW);
+  // Parar todo
+  digitalWrite(DIR_M1_A, LOW);
+  digitalWrite(DIR_M1_B, LOW);
+  digitalWrite(DIR_M2_A, LOW);
+  digitalWrite(DIR_M2_B, LOW);
+
   delay(2000);
 
-  digitalWrite(digitales[0], HIGH);
-  digitalWrite(digitales[2], HIGH);
-  digitalWrite(digitales[4], HIGH);
-  digitalWrite(digitales[6], HIGH);
+  // Todos adelante
+  digitalWrite(DIR_M1_A, HIGH);
+  digitalWrite(DIR_M1_B, LOW);
+
+  digitalWrite(DIR_M2_A, HIGH);
+  digitalWrite(DIR_M2_B, LOW);
+
   delay(1000);
 
-  //1 segundo RALL
-  digitalWrite(digitales[0], LOW);
-  digitalWrite(digitales[2], LOW);
-  digitalWrite(digitales[4], LOW);
-  digitalWrite(digitales[6], LOW);
-  digitalWrite(digitales[1], HIGH);
-  digitalWrite(digitales[3], HIGH);
-  digitalWrite(digitales[5], HIGH);
-  digitalWrite(digitales[7], HIGH);
+  // Todos atrás
+  digitalWrite(DIR_M1_A, LOW);
+  digitalWrite(DIR_M1_B, HIGH);
+
+  digitalWrite(DIR_M2_A, LOW);
+  digitalWrite(DIR_M2_B, HIGH);
+
   delay(1000);
-  
-  digitalWrite(digitales[1], LOW);
-  digitalWrite(digitales[3], LOW);
-  digitalWrite(digitales[5], LOW);
-  digitalWrite(digitales[7], LOW);
+
+  // Parar
+  digitalWrite(DIR_M1_A, LOW);
+  digitalWrite(DIR_M1_B, LOW);
+  digitalWrite(DIR_M2_A, LOW);
+  digitalWrite(DIR_M2_B, LOW);
+
   delay(5000);
 }
 
@@ -228,8 +231,6 @@ void i2cPeticionDato() {
   Wire.write(respuesta); 
 }
 
-
-
 // ========================
 // SETUP
 // ========================
@@ -258,16 +259,22 @@ void setup() {
   analogWrite(PWM4, 0);
 
   // DIRECCIONES
-  for (int i = 0; i < 8; i++) {
-    pinMode(digitales[i], OUTPUT);
-    digitalWrite(digitales[i], LOW);
-  }
+  pinMode(DIR_M1_A, OUTPUT);
+  pinMode(DIR_M1_B, OUTPUT);
+  pinMode(DIR_M2_A, OUTPUT);
+  pinMode(DIR_M2_B, OUTPUT);
+
+  digitalWrite(DIR_M1_A, LOW);
+  digitalWrite(DIR_M1_B, LOW);
+  digitalWrite(DIR_M2_A, LOW);
+  digitalWrite(DIR_M2_B, LOW);
 
   // Todas adelante por defecto
-  digitalWrite(digitales[0], HIGH);
-  digitalWrite(digitales[2], HIGH);
-  digitalWrite(digitales[4], HIGH);
-  digitalWrite(digitales[6], HIGH);
+  digitalWrite(DIR_M1_A, HIGH);
+  digitalWrite(DIR_M1_B, LOW);
+
+  digitalWrite(DIR_M2_A, HIGH);
+  digitalWrite(DIR_M2_B, LOW);
 
   // ========================
   // CALIBRACIÓN INICIAL
@@ -391,7 +398,7 @@ void loop()
         return;
 
     // ======================
-    // LÓGICA DEL ROBOT
+    // LOGICA DEL ROBOT
     // ======================
 
     vel1 = 180;

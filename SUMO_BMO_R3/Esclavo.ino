@@ -88,18 +88,6 @@ void i2cRecibirDato(int cuantosBytes) {
     vel3 = vRecibidas.v3;
     vel4 = vRecibidas.v4;
   }
-
-  bool sentido = false;
-  recv = (0 - 255)
-  if(recv > 127){
-    recv -= 128
-    sentido = true
-  }
-
-  recv *= 2
-
-
-
 }
 
 // 2. EL MAESTRO NOS PIDE LOS ENCODERS ACTUALES
@@ -138,12 +126,6 @@ void setup() {
   // Configurar Pines de Motor
   pinMode(PWM3, OUTPUT);
   pinMode(PWM4, OUTPUT);
-  /*
-  pinMode(DIR_M3_A, OUTPUT);
-  pinMode(DIR_M3_B, OUTPUT);
-  pinMode(DIR_M4_A, OUTPUT);
-  pinMode(DIR_M4_B, OUTPUT);
-  */
 
   // Motores parados al iniciar
   analogWrite(PWM3, 0);
