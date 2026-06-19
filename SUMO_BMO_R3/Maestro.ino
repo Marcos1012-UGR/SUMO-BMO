@@ -420,3 +420,215 @@ void aplicarVelocidadesMaestro() {
   Wire.write((byte*)&vEsclavo, sizeof(DatosVelocidades));
   Wire.endTransmission();
 }
+
+/// LOOP DELIBERATIVO ///
+/*
+
+// ¡¡¡Aun en desarrollo!!!
+
+void loop()
+{
+    bool estadoBoton = digitalRead(BOTON_START);
+
+    if (ultimoEstadoBoton == HIGH &&
+        estadoBoton == LOW)
+    {
+        robotActivo = !robotActivo;
+
+        if (robotActivo)
+        {
+            Serial.println("ROBOT ACTIVADO");
+        }
+        else
+        {
+            Serial.println("ROBOT DETENIDO");
+
+            vel1 = 0;
+            vel2 = 0;
+            vel3 = 0;
+            vel4 = 0;
+
+            aplicarVelocidadesMaestro();
+        }
+
+        delay(200);
+    }
+
+    ultimoEstadoBoton = estadoBoton;
+
+    if (!robotActivo)
+        return;
+
+    // ====================================
+    // PERCEPCIÓN
+    // ====================================
+
+    int izq  = digitalRead(sensorIzquierdo);
+    int der  = digitalRead(sensorDerecho);
+    int tras = digitalRead(sensorTrasero);
+
+    unsigned long tiempoActual = millis();
+
+    // ====================================
+    // ACTUALIZACIÓN DEL MAPA
+    // ====================================
+
+    if (izq == HIGH || der == HIGH || tras == HIGH)
+    {
+        peligroEstimado = 1.0;
+        tiempoUltimaLinea = tiempoActual;
+
+        if (izq == HIGH)
+            ultimaDireccionBorde = 1;
+
+        if (der == HIGH)
+            ultimaDireccionBorde = 2;
+
+        if (tras == HIGH)
+            ultimaDireccionBorde = 3;
+    }
+    else
+    {
+        unsigned long tiempoCaminado =
+            tiempoActual - tiempoUltimaLinea;
+
+        if (tiempoCaminado > 1200)
+        {
+            peligroEstimado = 0.85;
+        }
+        else
+        {
+            peligroEstimado =
+                (tiempoCaminado / 1200.0) * 0.7;
+        }
+    }
+
+    // ====================================
+    // TOMA DE DECISIONES
+    // ====================================
+
+    PensarYActuar();
+}
+
+void aplicarVelocidadesMaestro()
+{
+    analogWrite(PWM1, vel1 * k1);
+    analogWrite(PWM2, vel2 * k2);
+
+    DatosVelocidades vEsclavo =
+    {
+        (byte)(vel3 * k3),
+        (byte)(vel4 * k4)
+    };
+
+    Wire.beginTransmission(DIR_ESCLAVO);
+    Wire.write((byte*)&vEsclavo,
+               sizeof(DatosVelocidades));
+    Wire.endTransmission();
+}
+
+void PensarYActuar()
+{
+    // PLAN A: Emergencia
+    if (peligroEstimado >= 1.0)
+    {
+        if (ultimaDireccionBorde == 1)
+            evadirDiagonalAtrasDerecha();
+
+        if (ultimaDireccionBorde == 2)
+            evadirDiagonalAtrasIzquierda();
+
+        if (ultimaDireccionBorde == 3)
+            evadirLateralIzquierda();
+
+        delay(300);
+
+        peligroEstimado = 0.4;
+
+        return;
+    }
+
+    // PLAN B: Preventivo
+    if (peligroEstimado > 0.80)
+    {
+        ejecutarManiobraSeguraMecanum();
+        return;
+    }
+
+    // PLAN C: Ataque
+    ejecutarPlanBuscarEnemigoSincrono();
+}
+
+void ejecutarManiobraSeguraMecanum()
+{
+    // M1 adelante
+    digitalWrite(DIR_M1_A, HIGH);
+    digitalWrite(DIR_M1_B, LOW);
+
+    // M2 adelante
+    digitalWrite(DIR_M2_A, HIGH);
+    digitalWrite(DIR_M2_B, LOW);
+
+    vel1 = 110;
+    vel2 = 110;
+    vel3 = 110;
+    vel4 = 110;
+
+    aplicarVelocidadesMaestro();
+}
+
+void ejecutarPlanBuscarEnemigoSincrono()
+{
+    // M1 adelante
+    digitalWrite(DIR_M1_A, HIGH);
+    digitalWrite(DIR_M1_B, LOW);
+
+    // M2 adelante
+    digitalWrite(DIR_M2_A, HIGH);
+    digitalWrite(DIR_M2_B, LOW);
+
+    vel1 = 200;
+    vel2 = 200;
+    vel3 = 200;
+    vel4 = 200;
+
+    aplicarVelocidadesMaestro();
+}
+
+void evadirDiagonalAtrasDerecha()
+{
+    // M1 atrás
+    digitalWrite(DIR_M1_A, LOW);
+    digitalWrite(DIR_M1_B, HIGH);
+
+    // M2 parado
+    digitalWrite(DIR_M2_A, LOW);
+    digitalWrite(DIR_M2_B, LOW);
+
+    vel1 = 220;
+    vel2 = 0;
+    vel3 = 0;
+    vel4 = 220;
+
+    aplicarVelocidadesMaestro();
+}
+
+void evadirLateralIzquierda()
+{
+    // M1 atrás
+    digitalWrite(DIR_M1_A, LOW);
+    digitalWrite(DIR_M1_B, HIGH);
+
+    // M2 adelante
+    digitalWrite(DIR_M2_A, HIGH);
+    digitalWrite(DIR_M2_B, LOW);
+
+    vel1 = 230;
+    vel2 = 230;
+    vel3 = 230;
+    vel4 = 230;
+
+    aplicarVelocidadesMaestro();
+}
+
+*/
