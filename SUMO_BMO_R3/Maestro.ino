@@ -75,6 +75,26 @@ float k3 = 1.0;
 float k4 = 1.0;
 
 // ========================
+// SENSORES
+// ========================
+
+const int sensorIzquierdo = 11; 
+const int sensorDerecho   = A3; 
+const int sensorTrasero   = 4;  
+
+// ========================
+// VARIABLES DELIBERATIVAS 
+// ========================
+unsigned long tiempoUltimaLinea = 0;
+
+// 0.0 = Centro (Seguro) 
+// 1.0 = Borde (Peligro)
+float peligroEstimado = 0.0; 
+
+// 1 = Izquierda, 2 = Derecha, 3 = Atrás
+int ultimaDireccionBorde = 0;  
+
+// ========================
 // ISR (Interrupciones)
 // ========================
 void isr1() {
