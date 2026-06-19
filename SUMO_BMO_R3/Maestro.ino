@@ -4,7 +4,16 @@
 #include <Arduino.h>
 #include <Wire.h> // Librería esencial para I2C
 
-// ESTRUCTURAS DE DATOS PARA I2C
+// ========================
+// I2C
+// ========================
+#define I2C_SDA A4 
+#define I2C_SCL A5 
+#define DIR_ESCLAVO 67 
+
+// ========================
+// ESTRUCTURAS I2C
+// ========================
 struct DatosEncoders {
   long e3;
   long e4;
@@ -15,30 +24,68 @@ struct DatosVelocidades {
   byte v4;
 };
 
-// CONFIGURACIÓN I2C
-#define I2C_SDA A4 
-#define I2C_SCL A5 
-const byte DIR_ESCLAVO = 0x67; // Usaremos esta constante en todo el código
+// ========================
+// BOTÓN START
+// ========================
+#define BOTON_START A3
 
-// Variables globales de control
-volatile int encoder1 = 0, encoder2 = 0;
-int vel1 = 150, vel2 = 150, vel3 = 150, vel4 = 150; 
+// ========================
+// PWM MOTORES MAESTRO
+// ========================
+#define PWM1 5
+#define PWM2 6
 
-// INTERRUPCIONES 
+// ========================
+// ENCODERS MAESTRO
+// ========================
 #define INT1 2
 #define INT2 3
 
-// PWM 
-#define PWM1 5
-#define PWM2 6
-#define PWM3 9
-#define PWM4 10
-
-// SALIDAS DIGITALES 
-int digitales[] = {4, 7, 8, 12, 13, A0, A1, A2};
+volatile int encoder1 = 0;
+volatile int encoder2 = 0;
 
 // ========================
-// Funciones - ARDUINO UNO R3
+// DIRECCIÓN MOTORES MAESTRO
+// ========================
+#define DIR_M1_A 4
+#define DIR_M1_B 7
+#define DIR_M2_A 8
+#define DIR_M2_B 12
+
+// ========================
+// ESTADO
+// ========================
+bool robotActivo = false;
+bool ultimoEstadoBoton = HIGH;
+
+// ========================
+// VELOCIDADES
+// ========================
+int vel1 = 150; 
+int vel2 = 150; 
+int vel3 = 150; 
+int vel4 = 150; 
+
+// ========================
+// FACTORES DE CORRECCIÓN
+// ========================
+float k1 = 1.0;
+float k2 = 1.0;
+float k3 = 1.0;
+float k4 = 1.0;
+
+// ========================
+// ISR (Interrupciones)
+// ========================
+void isr1() {
+  encoder1++;
+}
+void isr2() {
+  encoder2++;
+}
+
+// ========================
+// Funciones - MAESTRO
 // ========================
 void test1(){
   analogWrite(PWM1, 255);
@@ -181,15 +228,7 @@ void i2cPeticionDato() {
   Wire.write(respuesta); 
 }
 
-// ========================
-// ISR (Interrupciones)
-// ========================
-void isr1() {
-  encoder1++;
-}
-void isr2() {
-  encoder2++;
-}
+
 
 // ========================
 // SETUP
@@ -197,12 +236,11 @@ void isr2() {
 void setup() {
   Serial.begin(9600);
 
+  // Botón de START
+  pinMode(BOTON_START, INPUT_PULLUP);
+
   // I2C
   Wire.begin(); // Se une al bus como Maestro
-
-  // ENCODERS
-  pinMode(INT1, INPUT_PULLUP);
-  pinMode(INT2, INPUT_PULLUP);
 
   attachInterrupt(digitalPinToInterrupt(INT1), isr1, FALLING);
   attachInterrupt(digitalPinToInterrupt(INT2), isr2, FALLING);
@@ -231,13 +269,147 @@ void setup() {
   digitalWrite(digitales[4], HIGH);
   digitalWrite(digitales[6], HIGH);
 
-  Serial.println("Setup listo - UNO R3 con I2C");
+  // ========================
+  // CALIBRACIÓN INICIAL
+  // ========================
+
+  Serial.println("Calibrando motores...");
+
+  noInterrupts();
+  encoder1 = 0;
+  encoder2 = 0;
+  interrupts();
+
+  // PWM idéntico para todos
+  analogWrite(PWM1, 200);
+  analogWrite(PWM2, 200);
+
+  DatosVelocidades vCal = {200, 200};
+
+  Wire.beginTransmission(DIR_ESCLAVO);
+  Wire.write((byte*)&vCal, sizeof(vCal));
+  Wire.endTransmission();
+
+  // Tiempo de medida
+  delay(3000);
+
+  // Leer esclavo
+  DatosEncoders encodersEsclavo = {0, 0};
+
+  Wire.requestFrom(DIR_ESCLAVO, sizeof(DatosEncoders));
+
+  if (Wire.available() == sizeof(DatosEncoders)) {
+    Wire.readBytes((char*)&encodersEsclavo,
+                   sizeof(DatosEncoders));
+  }
+
+  noInterrupts();
+
+  long e1 = encoder1;
+  long e2 = encoder2;
+
+  interrupts();
+
+  long e3 = encodersEsclavo.e3;
+  long e4 = encodersEsclavo.e4;
+
+  // Parar motores
+  analogWrite(PWM1, 0);
+  analogWrite(PWM2, 0);
+
+  vCal.v3 = 0;
+  vCal.v4 = 0;
+
+  Wire.beginTransmission(DIR_ESCLAVO);
+  Wire.write((byte*)&vCal, sizeof(vCal));
+  Wire.endTransmission();
+
+  // Evitar división por cero
+  if (e1 > 0) {
+
+    if (e2 > 0)
+      k2 = (float)e1 / e2;
+
+    if (e3 > 0)
+      k3 = (float)e1 / e3;
+
+    if (e4 > 0)
+      k4 = (float)e1 / e4;
+  }
+
+  Serial.println("Calibracion terminada");
+
+  Serial.print("k1 = ");
+  Serial.println(k1, 4);
+
+  Serial.print("k2 = ");
+  Serial.println(k2, 4);
+
+  Serial.print("k3 = ");
+  Serial.println(k3, 4);
+
+  Serial.print("k4 = ");
+  Serial.println(k4, 4);
+
+  Serial.println("Setup listo");
 }
 
 // ========================
-// LOOP
+//  LOOP
 // ========================
-void loop() { 
-  // Tu función de sincronización se ejecuta de forma correcta
-  actualizarControlSincronizacionCompleta();
+void loop()
+{
+    bool estadoBoton = digitalRead(BOTON_START);
+
+    if (ultimoEstadoBoton == HIGH &&
+        estadoBoton == LOW)
+    {
+        robotActivo = !robotActivo;
+
+        if (robotActivo)
+        {
+            Serial.println("ROBOT ACTIVADO");
+        }
+        else
+        {
+            Serial.println("ROBOT DETENIDO");
+
+            vel1 = 0;
+            vel2 = 0;
+            vel3 = 0;
+            vel4 = 0;
+
+            aplicarVelocidades();
+        }
+
+        delay(200);
+    }
+
+    ultimoEstadoBoton = estadoBoton;
+
+    if (!robotActivo)
+        return;
+
+    // ======================
+    // LÓGICA DEL ROBOT
+    // ======================
+
+    vel1 = 180;
+    vel2 = 180;
+    vel3 = 180;
+    vel4 = 180;
+
+    aplicarVelocidades();
+}
+
+void aplicarVelocidadesMaestro() {
+  // Aplica los PWM locales de inmediato
+  analogWrite(PWM1, vel1 * k1);
+  analogWrite(PWM2, vel2 * k2);
+
+  // Envía los PWM al esclavo por I2C de inmediato
+  DatosVelocidades vEsclavo = {(byte)(vel3 * k3), (byte)(vel4 * k4)};
+  Wire.beginTransmission(DIR_ESCLAVO);
+  Wire.write((byte*)&vEsclavo, sizeof(DatosVelocidades));
+  Wire.endTransmission();
 }

@@ -4,7 +4,16 @@
 #include <Arduino.h>
 #include <Wire.h>
 
-// ESTRUCTURAS DE DATOS (Deben ser idénticas a las del Maestro)
+// ========================
+// I2C
+// ========================
+#define I2C_SDA A4 
+#define I2C_SCL A5 
+#define DIR_ESCLAVO 67 
+
+// ========================
+// ESTRUCTURAS I2C
+// ========================
 struct DatosEncoders {
   long e3;
   long e4;
@@ -15,29 +24,46 @@ struct DatosVelocidades {
   byte v4;
 };
 
-// CONFIGURACIÓN I2C
-const byte DIR_ESCLAVO = 0x67; // Su propia dirección
+// ========================
+// BOTÓN START
+// ========================
+#define BOTON_START A3
 
-// Variables de control y encoders (Modificadas en ISR / I2C)
-volatile long encoder3 = 0;
-volatile long encoder4 = 0;
-volatile byte vel3 = 0;
-volatile byte vel4 = 0;
-
-// INTERRUPCIONES (Encoders locales del esclavo)
-#define INT3 2
-#define INT4 3
-
-// PWM (Motores del esclavo)
+// ========================
+// PWM MOTORES ESCLAVO
+// ========================
 #define PWM3 5
 #define PWM4 6
 
-// SALIDAS DIGITALES (Dirección de motores del esclavo)
-// Ajusta los pines según tu puente H (L298N, Shield, etc.)
+// ========================
+// ENCODERS ESCLAVO
+// ========================
+#define INT3 2
+#define INT4 3
+
+volatile long encoder3 = 0;
+volatile long encoder4 = 0;
+
+// ========================
+// DIRECCIÓN MOTORES ESCLAVO
+// ========================
 #define DIR_M3_A 4
 #define DIR_M3_B 7
 #define DIR_M4_A 8
 #define DIR_M4_B 12
+
+
+// ========================
+// ESTADO
+// ========================
+bool robotActivo = false;
+bool ultimoEstadoBoton = HIGH;
+
+// ========================
+// VELOCIDADES
+// ========================
+int vel3 = 0;
+int vel4 = 0;
 
 // ========================
 // ISR (Interrupciones de Encoders)
@@ -48,10 +74,6 @@ void isr3() {
 void isr4() {
   encoder4++;
 }
-
-// ========================
-// EVENTOS I2C
-// ========================
 
 // 1. EL MAESTRO NOS ENVÍA LAS VELOCIDADES CALCULADAS
 void i2cRecibirDato(int cuantosBytes) {
@@ -66,6 +88,18 @@ void i2cRecibirDato(int cuantosBytes) {
     vel3 = vRecibidas.v3;
     vel4 = vRecibidas.v4;
   }
+
+  bool sentido = false;
+  recv = (0 - 255)
+  if(recv > 127){
+    recv -= 128
+    sentido = true
+  }
+
+  recv *= 2
+
+
+
 }
 
 // 2. EL MAESTRO NOS PIDE LOS ENCODERS ACTUALES
@@ -98,19 +132,18 @@ void setup() {
   Wire.onReceive(i2cRecibirDato); // Cuando el maestro escribe
   Wire.onRequest(i2cPeticionDato); // Cuando el maestro pide
 
-  // Configurar Encoders
-  pinMode(INT3, INPUT_PULLUP);
-  pinMode(INT4, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(INT3), isr3, FALLING);
   attachInterrupt(digitalPinToInterrupt(INT4), isr4, FALLING);
 
   // Configurar Pines de Motor
   pinMode(PWM3, OUTPUT);
   pinMode(PWM4, OUTPUT);
+  /*
   pinMode(DIR_M3_A, OUTPUT);
   pinMode(DIR_M3_B, OUTPUT);
   pinMode(DIR_M4_A, OUTPUT);
   pinMode(DIR_M4_B, OUTPUT);
+  */
 
   // Motores parados al iniciar
   analogWrite(PWM3, 0);

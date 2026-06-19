@@ -20,10 +20,16 @@ struct DatosVelocidades {
   byte v4;
 };
 
+// FACTORES DE CORRECCIÓN
+float k1 = 1.0;
+float k2 = 1.0;
+float k3 = 1.0;
+float k4 = 1.0;
+
 // CONFIGURACIÓN I2C
 #define I2C_SDA A4 
 #define I2C_SCL A5 
-const byte DIR_ESCLAVO = 0x67; // Usaremos esta constante en todo el código
+const byte DIR_ESCLAVO = 0x67; 
 
 // Variables globales de control
 volatile int encoder1 = 0, encoder2 = 0;
@@ -48,10 +54,10 @@ const int sensorDerecho   = A3; // Libre analógico (usado como digital)
 const int sensorTrasero   = 4;  // Sacamos el 4 del array 'digitales' para usarlo aquí
 
 
-// ========================
-// LOOP MÁQUINA DE ESTADOS REACTIVA (MECANUM)
-// ========================
-void loop() { 
+// =================================
+// LOOP MÁQUINA DE ESTADOS REACTIVA
+// =================================
+void loop() {
   // 1. Leer los sensores de suelo en cada iteración
   int izq  = digitalRead(sensorIzquierdo);
   int der  = digitalRead(sensorDerecho);
