@@ -1,36 +1,37 @@
-#include <Wire.h>
-
-#define SLAVE_ADDR 8
-
 void setup() {
   Serial.begin(9600);
-  Wire.begin(); // Maestro
-  Serial.println("Maestro listo");
+
+  Serial.println(">>>>>>>>>>>>>>>>>>>>>>MAIN: Sensor");
+  setupSensor();
+
+  Serial.println(">>>>>>>>>>>>>>>>>>>>>>MAIN: SHARP");
+  setupSHARP();
+
+  Serial.println(">>>>>>>>>>>>>>>>>>>>>>MAIN: I2C");
+  setupI2C();
+
+  Serial.println(">>>>>>>>>>>>>>>>>>>>>>MAIN: Servo");
+  setupServo();
+
+  Serial.println(">>>>>>>>>>>>>>>>>>>>>>MAIN: Motor");
+  setupMotor();
 }
 
 void loop() {
-  Serial.println("Enviando mensaje a B...");
+  Serial.println(">>>>>>>>>>>>>>>>>>>>>>MAIN LOOP: Sensor");
+  loopSensor();
 
-  Wire.beginTransmission(SLAVE_ADDR);
-  Wire.write("Hola B");
-  Wire.endTransmission();
+  Serial.println(">>>>>>>>>>>>>>>>>>>>>>MAIN LOOP: SHARP");
+  loopSHARP();
 
-  delay(500);
+  Serial.println(">>>>>>>>>>>>>>>>>>>>>>MAIN LOOP: I2C");
+  loopI2C();
 
-  Serial.println("Solicitando respuesta a B...");
+  Serial.println(">>>>>>>>>>>>>>>>>>>>>>MAIN LOOP: Servo");
+  loopServo();
 
-  Wire.requestFrom(SLAVE_ADDR, 6);
+  Serial.println(">>>>>>>>>>>>>>>>>>>>>>MAIN LOOP: Motor");
+  test1();
 
-  String respuesta = "";
-  while (Wire.available()) {
-    char c = Wire.read();
-    respuesta += c;
-  }
-
-  Serial.print("Respuesta recibida: ");
-  Serial.println(respuesta);
-
-  Serial.println("----------------------");
-
-  delay(2000);
+  //delay(2000);
 }
