@@ -20,15 +20,27 @@ void setupI2C() {
   Wire.begin(SLAVE_ADDR);
   #ifdef enableTest
   Wire.onReceive(recibirEvento);
+  Wire.onRequest(enviarEvento);
   #else
   Wire.onReceive(recvI2C);
+  Wire.onRequest(sendI2C);
   #endif
-  Wire.onRequest(enviarEvento);
   Serial.println("Esclavo listo");
 }
 
-void recvI2C() {
+void recvI2C(int numBytes) {
   Wire.readBytes((byte*)&dv, sizeof(dv));
+}
+
+void sendI2C() {
+  DatosEncoders envio;
+
+  envio.e3 = encoder3;
+  envio.e4 = encoder4;
+  encoder3 = 0;
+  encoder4 = 0;
+
+  Wire.write((byte*)&envio, sizeof(envio));
 }
 
 void recibirEvento(int bytes) {

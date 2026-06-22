@@ -1,5 +1,8 @@
 //#define enableTest
 
+volatile long encoder3 = 0;
+volatile long encoder4 = 0;
+
 struct DatosVelocidades {
   byte v3;
   byte v4;
@@ -7,7 +10,16 @@ struct DatosVelocidades {
   bool dir4;
 };
 
+struct DatosEncoders {
+  long e3;
+  long e4;
+};
+
 DatosVelocidades dv;
+DatosEncoders de;
+
+// CONTROL INTERRUPTS EN ENVIO
+bool ACCESS = false;
 
 void setup() {
   setupI2C();
@@ -15,12 +27,14 @@ void setup() {
 }
 
 void loop() {
-  Serial.println("Velocidades------------");
-  Serial.println("Vel3: " + String(dv.v3));
-  Serial.println("Vel4: " + String(dv.v4));
-  Serial.println("FW3: " + String(dv.dir3));
-  Serial.println("FW4: " + String(dv.dir4));
-  Serial.println("");
-
-  delay(500);
+  if(ACCESS) {
+    noInterrupts();
+    resetE3();
+    resetE4();
+    interrupts();
+    ACCESS = false;
+  }
+  setMotor(dv);
+  //Serial.println(getE3());
+  delay(10);
 }

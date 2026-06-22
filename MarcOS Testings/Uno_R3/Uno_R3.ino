@@ -5,10 +5,23 @@
 // ========================
 const int BOTON_START = 13;
 
+// ========================
+// DEMO
+// ========================
+bool DEMO = false;
+
 enum Sensor {
   IZQUIERDO,
   DERECHO,
   TRASERO
+};
+
+// ========================
+// ESTRUCTURAS I2C
+// ========================
+struct DatosEncoders {
+  long e3;
+  long e4;
 };
 
 struct DatosVelocidades {
@@ -18,7 +31,16 @@ struct DatosVelocidades {
   bool dir4;
 };
 
+struct DatosVelocidadesMaestro {
+  byte v1;
+  byte v2;
+  bool dir1;
+  bool dir2;
+};
+
 DatosVelocidades dv;
+DatosEncoders de;
+DatosVelocidadesMaestro dvm;
 
 void setup() {
   Serial.begin(9600);
@@ -75,27 +97,14 @@ void test() {
 }
 
 void loopMain() {
-  for(int i = 0; i < 256; i+=20) {
-    dv.v3 = i;
-    dv.v4 = 255 - i;
-    if (i%40 == 0) {
-      dv.dir3 = true;
-      dv.dir4 = false;
-    }
-    else {
-      dv.dir3 = false;
-      dv.dir4 = true;
-    }
-
-    Serial.println("Velocidades------------");
-    Serial.println("Vel3: " + String(dv.v3));
-    Serial.println("Vel4: " + String(dv.v4));
-    Serial.println("FW3: " + String(dv.dir3));
-    Serial.println("FW4: " + String(dv.dir4));
-    Serial.println("Velocidades------------\n");
-
-    sendI2C(dv);
-
-    delay(1000);
-  }
+  if (DEMO)
+    demo();
+  else
+    test2();
 }
+
+
+
+// FACING UP
+// 4  
+// 2  1

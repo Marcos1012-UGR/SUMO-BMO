@@ -10,12 +10,17 @@
 
 void setupI2C() {
   Wire.begin(); // Maestro
+  Wire.onReceive(recvI2C);
 }
 
 void sendI2C(DatosVelocidades dv) {
   Wire.beginTransmission(DIR_ESCLAVO);
   Wire.write((byte*)&dv, sizeof(dv));
   Wire.endTransmission();
+}
+
+void recvI2C(int numBytes) {
+  Wire.readBytes((byte*)&de, sizeof(de));
 }
 
 void testI2C() {
@@ -30,6 +35,7 @@ void testI2C() {
   Serial.println("Solicitando respuesta a B...");
 
   Wire.requestFrom(DIR_ESCLAVO, 6);
+  Wire.readBytes((byte*)&de, sizeof(de));
 
   String respuesta = "";
   while (Wire.available()) {
