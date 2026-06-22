@@ -10,7 +10,6 @@
 
 void setupI2C() {
   Wire.begin(); // Maestro
-  Serial.println("Maestro listo");
 }
 
 void loopI2C() {

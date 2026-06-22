@@ -1,25 +1,51 @@
+//#define enableTest
+
+enum Sensor {
+  IZQUIERDO,
+  DERECHO,
+  TRASERO
+};
+
 void setup() {
   Serial.begin(9600);
 
+  #ifdef enableTest
   Serial.println(">>>>>>>>>>>>>>>>>>>>>>MAIN: Sensor");
-  setupSensor();
+  setupSensor(); // Solo imprime por Serie
+  #endif
 
+  #ifdef enableTest
   Serial.println(">>>>>>>>>>>>>>>>>>>>>>MAIN: SHARP");
-  setupSHARP();
+  setupSHARP(); // Solo imprime por Serie
+  #endif
 
+  #ifdef enableTest
   Serial.println(">>>>>>>>>>>>>>>>>>>>>>MAIN: I2C");
+  #endif
   setupI2C();
 
+  #ifdef enableTest
   Serial.println(">>>>>>>>>>>>>>>>>>>>>>MAIN: Servo");
+  #endif
   setupServo();
 
+  #ifdef enableTest
   Serial.println(">>>>>>>>>>>>>>>>>>>>>>MAIN: Motor");
+  #endif
   setupMotor();
 }
 
 void loop() {
+  #ifdef enableTest
+  test();
+  #else
+  loopMain();
+  #endif
+}
+
+void test() {
   Serial.println(">>>>>>>>>>>>>>>>>>>>>>MAIN LOOP: Sensor");
-  loopSensor();
+  testSensor();
 
   Serial.println(">>>>>>>>>>>>>>>>>>>>>>MAIN LOOP: SHARP");
   loopSHARP();
@@ -28,10 +54,14 @@ void loop() {
   loopI2C();
 
   Serial.println(">>>>>>>>>>>>>>>>>>>>>>MAIN LOOP: Servo");
-  loopServo();
+  testServo();
 
   Serial.println(">>>>>>>>>>>>>>>>>>>>>>MAIN LOOP: Motor");
   test1();
+}
 
-  //delay(2000);
+void loopMain() {
+
+  
+
 }

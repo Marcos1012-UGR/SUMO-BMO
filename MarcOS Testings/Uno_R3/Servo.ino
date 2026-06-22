@@ -12,17 +12,23 @@ void setupServo() {
   miServo.write(pos);
 }
 
-void loopServo() {
+void testServo() {
   for(int i = 0; i <= 180; i+=10) {
 
-    miServo.write(i);
+    ServoGoTo(i);
 
     delay(50);
   }
   for(int i = 180; i >= 0; i-=10) {
 
-    miServo.write(i);
+    ServoGoTo(i);
 
     delay(50);
+  }
+}
+
+void ServoGoTo(int p) {
+  if (p <= 180 && p >= 0) {
+    miServo.write(p);
   }
 }
