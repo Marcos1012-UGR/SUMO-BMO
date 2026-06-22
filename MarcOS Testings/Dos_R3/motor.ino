@@ -6,11 +6,6 @@ struct DatosEncoders {
   long e4;
 };
 
-struct DatosVelocidades {
-  byte v3;
-  byte v4;
-};
-
 // ========================
 // BOTÓN START
 // ========================

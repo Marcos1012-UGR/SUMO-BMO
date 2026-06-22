@@ -6,16 +6,6 @@ struct DatosEncoders {
   long e4;
 };
 
-struct DatosVelocidades {
-  byte v3;
-  byte v4;
-};
-
-// ========================
-// BOTÓN START
-// ========================
-const int BOTON_START = 13;
-
 // ========================
 // PWM MOTORES MAESTRO
 // ========================

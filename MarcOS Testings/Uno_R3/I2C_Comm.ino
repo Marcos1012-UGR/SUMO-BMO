@@ -12,7 +12,13 @@ void setupI2C() {
   Wire.begin(); // Maestro
 }
 
-void loopI2C() {
+void sendI2C(DatosVelocidades dv) {
+  Wire.beginTransmission(DIR_ESCLAVO);
+  Wire.write((byte*)&dv, sizeof(dv));
+  Wire.endTransmission();
+}
+
+void testI2C() {
   Serial.println("Enviando mensaje a B...");
 
   Wire.beginTransmission(DIR_ESCLAVO);

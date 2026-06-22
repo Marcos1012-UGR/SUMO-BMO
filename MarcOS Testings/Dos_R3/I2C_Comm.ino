@@ -6,7 +6,7 @@
 volatile bool nuevoMensaje = false;
 String mensajeRecibido = "";
 
-void loopI2C() {
+void testI2C() {
   // El loop se encarga de imprimir de forma segura fuera de la interrupción
   if (nuevoMensaje) {
     Serial.print("Mensaje recibido: ");
@@ -17,10 +17,18 @@ void loopI2C() {
 
 void setupI2C() {
   Serial.begin(9600);
-  Wire.begin(SLAVE_ADDR); 
+  Wire.begin(SLAVE_ADDR);
+  #ifdef enableTest
   Wire.onReceive(recibirEvento);
+  #else
+  Wire.onReceive(recvI2C);
+  #endif
   Wire.onRequest(enviarEvento);
   Serial.println("Esclavo listo");
+}
+
+void recvI2C() {
+  Wire.readBytes((byte*)&dv, sizeof(dv));
 }
 
 void recibirEvento(int bytes) {

@@ -1,10 +1,24 @@
 //#define enableTest
 
+// ========================
+// BOTÓN START
+// ========================
+const int BOTON_START = 13;
+
 enum Sensor {
   IZQUIERDO,
   DERECHO,
   TRASERO
 };
+
+struct DatosVelocidades {
+  byte v3;
+  byte v4;
+  bool dir3;
+  bool dir4;
+};
+
+DatosVelocidades dv;
 
 void setup() {
   Serial.begin(9600);
@@ -51,7 +65,7 @@ void test() {
   loopSHARP();
 
   Serial.println(">>>>>>>>>>>>>>>>>>>>>>MAIN LOOP: I2C");
-  loopI2C();
+  testI2C();
 
   Serial.println(">>>>>>>>>>>>>>>>>>>>>>MAIN LOOP: Servo");
   testServo();
@@ -61,7 +75,27 @@ void test() {
 }
 
 void loopMain() {
+  for(int i = 0; i < 256; i+=20) {
+    dv.v3 = i;
+    dv.v4 = 255 - i;
+    if (i%40 == 0) {
+      dv.dir3 = true;
+      dv.dir4 = false;
+    }
+    else {
+      dv.dir3 = false;
+      dv.dir4 = true;
+    }
 
-  
+    Serial.println("Velocidades------------");
+    Serial.println("Vel3: " + String(dv.v3));
+    Serial.println("Vel4: " + String(dv.v4));
+    Serial.println("FW3: " + String(dv.dir3));
+    Serial.println("FW4: " + String(dv.dir4));
+    Serial.println("Velocidades------------\n");
 
+    sendI2C(dv);
+
+    delay(1000);
+  }
 }
