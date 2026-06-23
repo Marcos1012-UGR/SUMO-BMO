@@ -326,8 +326,10 @@ void test2() {
         if (!longPressHandled) {
           robotActivo = !robotActivo;
 
-          if (robotActivo)
+          if (robotActivo) {
             Serial.println("ROBOT ACTIVADO");
+            delay(3000);
+          }
           else
             Serial.println("ROBOT DETENIDO");
         }
@@ -365,6 +367,120 @@ void test2() {
   aplicarVelocidades(true, true, true, true);
 }
 
+void definitive() {
+  bool estadoBoton = digitalRead(BOTON_START);
+
+  // ======================
+  // DETECCIÓN DE CAMBIO (debounce)
+  // ======================
+  if (estadoBoton != ultimoEstadoBoton) {
+    if (millis() - ultimoCambio > debounceTime) {
+
+      // FLANCO DE BAJADA (pulsación)
+      if (estadoBoton == LOW) {
+        pressed = true;
+        longPressHandled = false;
+        pressed_on = millis();
+      }
+
+      // FLANCO DE SUBIDA (soltar botón)
+      if (estadoBoton == HIGH && pressed) {
+
+        // Si NO fue long press → toggle normal
+        if (!longPressHandled) {
+          robotActivo = !robotActivo;
+
+          if (robotActivo) {
+            Serial.println("ROBOT ACTIVADO");
+            delay(3000);
+          }
+          else {
+            Serial.println("ROBOT DETENIDO");
+            ATTACK = false;
+          }
+        }
+
+        pressed = false;
+      }
+
+      ultimoCambio = millis();
+    }
+  }
+
+  ultimoEstadoBoton = estadoBoton;
+
+  // ======================
+  // DETECCIÓN LONG PRESS
+  // ======================
+  if (pressed && !longPressHandled) {
+    if (millis() - pressed_on >= 3000) {
+      DEMO = true;
+      longPressHandled = true;
+
+      Serial.println("MODO DEMO ACTIVADO");
+    }
+  }
+
+  // ======================
+  // CONTROL MOTORES
+  // ======================
+  if (robotActivo) {
+    IA();
+  } else {
+    vel1 = vel2 = vel3 = vel4 = 0;
+    aplicarVelocidades(true, true, true, true);
+  }
+}
+
+void MovSinPutoMiedo() {
+  vel1 = vel2 = vel3 = vel4 = 255;
+  aplicarVelocidades(true, true, true, true);
+}
+
+void MovSTOP() {
+  vel1 = vel2 = vel3 = vel4 = 0;
+  aplicarVelocidades(true, true, true, true);
+}
+
+void MovExploracion() {
+  vel1 = vel2 = vel3 = vel4 = 150;
+  aplicarVelocidades(true, true, true, true);
+}
+
+void MovCorregir(bool izq, bool dch, bool tr) {
+  vel1 = vel2 = vel3 = vel4 = 255;
+  String res = String(izq) + " " + String (dch) + " " + String(tr);
+  Serial.println(res);
+
+  if (izq && !dch && !tr) {           // Tocamos izq
+    Serial.print("A");
+    aplicarVelocidades(true, false, false, true);
+  } else if (dch && !izq && !tr) {    // Tocamos dch
+    Serial.print("B");
+    aplicarVelocidades(false, true, true, false);
+  } else if (tr && !izq && !dch) {    // Tocamos tr
+    Serial.print("C");
+    aplicarVelocidades(true, true, true, true);
+  }
+
+  else if (izq && dch && !tr) {      // Tocamos izq y dch
+    Serial.print("D");
+    aplicarVelocidades(false, false, false, false);
+  } else if (tr && izq && !dch) {    // Tocamos izq y tr
+    Serial.print("E");
+    vel2 = vel3 = 0;
+    aplicarVelocidades(true, true, true, true);
+  } else if (tr && dch && !izq) {    // Tocamos dch y tr
+    Serial.print("F");
+    vel1 = vel4 = 0;
+    aplicarVelocidades(true, true, true, true);
+  }
+
+  else if (tr && dch && izq) {       // TODOS
+    Serial.print("G");
+    aplicarVelocidades(true, true, true, true);
+  }
+}
 
 void demo() {
   vel1 = vel2 = vel3 = vel4 = 0;
